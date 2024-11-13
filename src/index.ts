@@ -1,5 +1,6 @@
 import express from "express";
 import config from "./config/config";
+// import prisma from './database'
 
 const app = express();
 
