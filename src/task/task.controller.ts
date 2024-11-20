@@ -4,6 +4,7 @@ import 'reflect-metadata';
 import { Logger } from 'tslog';
 import { BaseController } from '../common/base.controller';
 import { ValidateMiddleware } from '../common/validate.middleware';
+import { HttpError } from '../errors/http.error';
 import { ILogger } from '../logger/logger.interface';
 import { TYPES } from '../types';
 import { TaskCreateDto } from './dto/task-create.dto';
@@ -24,16 +25,46 @@ export class TaskController extends BaseController implements ITaskController {
 				func: this.create,
 				middlewares: [new ValidateMiddleware(TaskCreateDto)],
 			},
+			{
+				path: '/:id',
+				method: 'delete',
+				func: this.delete,
+			},
 		]);
 	}
 
 	async create({ body }: Request<{}, {}, TaskCreateDto>, res: Response, next: NextFunction) {
-		const createdTask = await this.taskService.createTask(body);
+		try {
+			const createdTask = await this.taskService.createTask(body);
 
-		this.ok(res, {
-			...createdTask,
-			// TODO Create a middleware for converting
-			id: Number(createdTask.id),
-		});
+			this.ok(res, {
+				...createdTask,
+				// TODO Create a middleware for converting
+				id: Number(createdTask.id),
+			});
+		} catch (error) {
+			this.send(res, 400, error);
+		}
+	}
+
+	async delete(req: Request, res: Response, next: NextFunction) {
+		try {
+			const taskId = Number(req.params.taskId);
+			if (isNaN(taskId) || taskId <= 0) {
+				throw new HttpError(400, 'ID задачи должен быть положительным числом', '[TaskController]');
+			}
+
+			const deletedTask = await this.taskService.deleteTask(taskId);
+			this.ok(res, {
+				id: Number(deletedTask.id), // Преобразование данных, если требуется
+			});
+		} catch (error) {
+			if (error instanceof HttpError) {
+				this.send(res, error.statusCode, { message: error.message });
+			} else {
+				console.error('Unexpected error:', error);
+				this.send(res, 500, { message: 'Внутренняя ошибка сервера' });
+			}
+		}
 	}
 }

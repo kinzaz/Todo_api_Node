@@ -18,4 +18,8 @@ export class TaskService implements ITaskService {
 		const task = new Task(title, description);
 		return this.taskRepository.create(task);
 	}
+
+	async deleteTask(id: number): Promise<TaskModel> {
+		return this.taskRepository.delete(id);
+	}
 }

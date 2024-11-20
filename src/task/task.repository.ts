@@ -16,4 +16,12 @@ export class TaskRepository implements ITaskRepository {
 			},
 		});
 	}
+
+	async delete(id: number) {
+		return this.prismaService.client.taskModel.delete({
+			where: {
+				id,
+			},
+		});
+	}
 }
