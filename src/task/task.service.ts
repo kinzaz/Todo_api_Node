@@ -7,6 +7,7 @@ import { TaskCreateDto } from './dto/task-create.dto';
 import { Task } from './task.entity';
 import { ITaskRepository } from './task.repository.interface';
 import { ITaskService } from './task.service.interface';
+import { HttpError } from '../errors/http.error';
 
 @injectable()
 export class TaskService implements ITaskService {
@@ -21,5 +22,13 @@ export class TaskService implements ITaskService {
 
 	async deleteTask(id: number): Promise<TaskModel> {
 		return this.taskRepository.delete(id);
+	}
+
+	async getTask(id: number): Promise<TaskModel | null> {
+		const task = await this.taskRepository.get(id);
+		if (task && task.deletedAt) {
+			throw new HttpError(404, 'Задача была удалена');
+		}
+		return task;
 	}
 }

@@ -30,6 +30,11 @@ export class TaskController extends BaseController implements ITaskController {
 				method: 'delete',
 				func: this.delete,
 			},
+			{
+				path: '/:id',
+				method: 'get',
+				func: this.getTask,
+			},
 		]);
 	}
 
@@ -49,14 +54,45 @@ export class TaskController extends BaseController implements ITaskController {
 
 	async delete(req: Request, res: Response, next: NextFunction) {
 		try {
-			const taskId = Number(req.params.taskId);
+			const taskId = Number(req.params.id);
 			if (isNaN(taskId) || taskId <= 0) {
 				throw new HttpError(400, 'ID задачи должен быть положительным числом', '[TaskController]');
+			}
+			const task = await this.taskService.getTask(Number(taskId));
+			if (task === null) {
+				throw new HttpError(400, 'Задача отсутствует', '[TaskController]');
 			}
 
 			const deletedTask = await this.taskService.deleteTask(taskId);
 			this.ok(res, {
-				id: Number(deletedTask.id), // Преобразование данных, если требуется
+				id: Number(deletedTask.id),
+			});
+		} catch (error) {
+			if (error instanceof HttpError) {
+				this.send(res, error.statusCode, { message: error.message });
+			} else {
+				console.error('Unexpected error:', error);
+				this.send(res, 500, { message: 'Внутренняя ошибка сервера' });
+			}
+		}
+	}
+
+	async getTask(req: Request, res: Response, next: NextFunction) {
+		try {
+			const taskId = Number(req.params.id);
+
+			if (isNaN(taskId) || taskId <= 0) {
+				throw new HttpError(400, 'ID задачи должен быть положительным числом', '[TaskController]');
+			}
+			const task = await this.taskService.getTask(Number(taskId));
+			if (task === null) {
+				throw new HttpError(400, 'Задача отсутствует', '[TaskController]');
+			}
+
+			this.ok(res, {
+				...task,
+				// TODO Create a middleware for converting
+				id: Number(task.id),
 			});
 		} catch (error) {
 			if (error instanceof HttpError) {
