@@ -31,6 +31,7 @@ export class App {
 
 	useRoutes() {
 		this.app.use('/task', this.taskController.router);
+		this.app.use('/tasks', this.taskController.router);
 	}
 
 	useExeptionFilters() {

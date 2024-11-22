@@ -2,6 +2,7 @@ import { inject, injectable } from 'inversify';
 import 'reflect-metadata';
 import { PrismaService } from '../database/prisma.service';
 import { TYPES } from '../types';
+import { TaskUpdateDto } from './dto/task-update.dto';
 import { Task } from './task.entity';
 import { ITaskRepository } from './task.repository.interface';
 
@@ -32,5 +33,19 @@ export class TaskRepository implements ITaskRepository {
 				deletedAt: null,
 			},
 		});
+	}
+
+	async update(taskId: number, task: TaskUpdateDto) {
+		return await this.prismaService.client.taskModel.update({
+			where: {
+				id: taskId,
+				deletedAt: null,
+			},
+			data: task,
+		});
+	}
+
+	async getAll() {
+		return await this.prismaService.client.taskModel.findMany();
 	}
 }

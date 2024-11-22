@@ -8,6 +8,7 @@ import { HttpError } from '../errors/http.error';
 import { ILogger } from '../logger/logger.interface';
 import { TYPES } from '../types';
 import { TaskCreateDto } from './dto/task-create.dto';
+import { TaskUpdateDto } from './dto/task-update.dto';
 import { ITaskController } from './task.controller.interface';
 import { ITaskService } from './task.service.interface';
 
@@ -34,6 +35,16 @@ export class TaskController extends BaseController implements ITaskController {
 				path: '/:id',
 				method: 'get',
 				func: this.getTask,
+			},
+			{
+				path: '/:id',
+				method: 'patch',
+				func: this.update,
+			},
+			{
+				path: '/',
+				method: 'get',
+				func: this.getAll,
 			},
 		]);
 	}
@@ -101,6 +112,46 @@ export class TaskController extends BaseController implements ITaskController {
 				console.error('Unexpected error:', error);
 				this.send(res, 500, { message: 'Внутренняя ошибка сервера' });
 			}
+		}
+	}
+
+	async update(req: Request<{ id: string }, {}, TaskUpdateDto>, res: Response, next: NextFunction) {
+		try {
+			const taskId = Number(req.params.id);
+			const task = await this.taskService.getTask(Number(taskId));
+			if (task === null) {
+				throw new HttpError(400, 'Задача отсутствует', '[TaskController]');
+			}
+
+			const updatedTask = await this.taskService.updateTask(taskId, req.body);
+			if (!updatedTask) {
+				throw new HttpError(500, 'Не удалось обновить задачу', '[TaskController]');
+			}
+
+			this.ok(res, {
+				...updatedTask,
+				id: Number(task.id),
+			});
+		} catch (error) {
+			next(error);
+		}
+	}
+
+	async getAll(_: Request, res: Response, next: NextFunction) {
+		try {
+			const tasks = await this.taskService.getAll();
+			if (!tasks) {
+				throw new HttpError(500, 'Не удалось получить список задач', '[TaskController]');
+			}
+
+			const tasksWithStringIds = tasks.map((task) => ({
+				...task,
+				id: task.id.toString(),
+			}));
+
+			this.ok(res, tasksWithStringIds);
+		} catch (error) {
+			next(error);
 		}
 	}
 }
