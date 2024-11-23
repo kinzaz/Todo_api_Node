@@ -1,3 +1,4 @@
+import cors from 'cors';
 import express, { Express } from 'express';
 import { Server } from 'http';
 import { inject, injectable } from 'inversify';
@@ -27,6 +28,7 @@ export class App {
 
 	useMiddleware() {
 		this.app.use(express.json());
+		this.app.use(cors());
 	}
 
 	useRoutes() {
